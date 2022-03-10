@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using IDistrubutedCacheRedis.Models;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,25 +18,35 @@ namespace IDistrubutedCacheRedis.Controllers
             _distrubutedCacheRedis = distrubutedCacheRedis;
         }
 
-        public  async Task< IActionResult> Index()
+        public async Task<IActionResult> Index()
         {
+
+
             DistributedCacheEntryOptions cacheEntryOptions = new DistributedCacheEntryOptions();
             cacheEntryOptions.AbsoluteExpiration = DateTime.Now.AddMinutes(2);
-              await _distrubutedCacheRedis.SetStringAsync("Product", "Elma", cacheEntryOptions);
+            Product product = new Product
+            {
+                Id = 1,
+                ProductName = "Kalem",
+                Price = 100,
+            };
+            string jsonProduct = JsonConvert.SerializeObject(product);
+            await _distrubutedCacheRedis.SetStringAsync("product:1", jsonProduct, cacheEntryOptions);
 
             return View();
         }
 
         public async Task<IActionResult> Show()
         {
-            string name = await _distrubutedCacheRedis.GetStringAsync("Product");
-            ViewBag.name = name;
+            string jsonProduct = await _distrubutedCacheRedis.GetStringAsync("product:1");
+            Product p = JsonConvert.DeserializeObject<Product>(jsonProduct);
+            ViewBag.product = p;
 
             return View();
         }
         public async Task<IActionResult> Remove()
         {
-           await _distrubutedCacheRedis.RemoveAsync("Product");
+            await _distrubutedCacheRedis.RemoveAsync("Product");
 
             return View();
         }
