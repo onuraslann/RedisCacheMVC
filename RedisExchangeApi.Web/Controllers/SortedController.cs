@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using RedisExchangeApi.Web.Models;
 using RedisExchangeApi.Web.Services;
 using StackExchange.Redis;
 using System;
@@ -22,7 +23,7 @@ namespace RedisExchangeApi.Web.Controllers
         public IActionResult Index()
         {
             HashSet<string> list = new HashSet<string>();
-
+            
             if (_db.KeyExists(ListKey))
             {
                 _db.SortedSetScan(ListKey).ToList().ForEach(x =>
@@ -36,17 +37,21 @@ namespace RedisExchangeApi.Web.Controllers
         [HttpPost]
         public IActionResult Add(string name,int score)
         {
-            
             _db.SortedSetAdd(ListKey, name, score);
-            _db.KeyExpire(ListKey, DateTime.Now.AddMinutes(2));
+
+            _db.KeyExpire(ListKey, DateTime.Now.AddHours(1));
             return RedirectToAction("Index");
         }
-        public IActionResult Delete(string name)
+        public IActionResult Delete(string name,int score)
         {
-            _db.SortedSetRemove(ListKey, name);
-
-
+            string key = name.Split(':')[0];
+            _db.SortedSetRemove(ListKey, key);
             return RedirectToAction("Index");
-        }
+
+
+
+
+
+        }   
     }
 }
